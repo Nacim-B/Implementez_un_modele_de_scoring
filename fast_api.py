@@ -39,6 +39,6 @@ def predict(request: PredictionRequest):
 
     # prediction
     prediction = model.predict(client_data)[0]
-    probability = model.predict_proba(client_data)[0].max()
+    probability = model.predict_proba(client_data)[0][0]
 
     return {"id_client": request.id_client, "prediction": prediction, "probability": probability}
