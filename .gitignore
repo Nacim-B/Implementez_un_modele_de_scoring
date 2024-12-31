@@ -1,0 +1,8 @@
+# Exclude all folders
+*/
+
+# Exclure notebooks from Jupyter Notebook
+*.ipynb
+
+# Exclude heavy dataset
+Home_credit_risk_data_modeling.csv
