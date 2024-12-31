@@ -37,7 +37,8 @@ def predict(request: PredictionRequest):
     # retrieve client data
     client_data = data[data["SK_ID_CURR"] == request.id_client].drop(columns=["SK_ID_CURR"])
 
-    # prodiction
+    # prediction
     prediction = model.predict(client_data)[0]
+    probability = model.predict_proba(client_data)[0].max()
 
-    return {"id_client": request.id_client, "prediction": prediction}
+    return {"id_client": request.id_client, "prediction": prediction, "probability": probability}
