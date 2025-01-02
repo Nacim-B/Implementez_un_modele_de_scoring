@@ -36,7 +36,7 @@ class PredictionRequest(BaseModel):
 class PredictionNewClientRequest(BaseModel):
     loan_request_amount: int
     annual_salary: int
-    annual_loans: int
+    annual_annuity: int
     age: int
 
 
@@ -66,7 +66,7 @@ def predict_new_client(request: PredictionNewClientRequest):
     input_data = np.array([
         request.loan_request_amount,
         request.annual_salary,
-        request.annual_loans,
+        request.annual_annuity,
         request.age
     ]).reshape(1, -1)
 
