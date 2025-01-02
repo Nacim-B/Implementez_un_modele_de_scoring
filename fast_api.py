@@ -11,18 +11,35 @@ app = FastAPI()
 # load test data and model
 dataset_path = "./data_test_for_dashboard.csv"
 model_path = "./old_client_model.pkl"
+model_new_client_path = "./new_client_model.pkl"
 
 data = pd.read_csv(dataset_path)
 
+data_new_client = data[['AMT_GOODS_PRICE', 'INCOME_PER_PERSON', 'AMT_ANNUITY', 'DAYS_BIRTH']]
+
+# AMT_GOODS_PRICE montant du prêt demandé
+# INCOME_PER_PERSON montant salaire annuel
+# AMT_ANNUITY montant prêts déjà contractés (annuel)
+# combien de jours depuis naissance (négatif)
+
 with open(model_path, 'rb') as f:
     model = pickle.load(f)
+
+with open(model_new_client_path, 'rb') as f:
+    model_new_client = pickle.load(f)
 
 
 class PredictionRequest(BaseModel):
     id_client: int
 
 
-# check if
+class PredictionNewClientRequest(BaseModel):
+    loan_request_amount: int
+    annual_salary: int
+    annual_loans: int
+    age: int
+
+
 @app.get("/")
 def read_root():
     return {"message": "API is working"}
@@ -42,3 +59,19 @@ def predict(request: PredictionRequest):
     probability_default = model.predict_proba(client_data)[0][1]
 
     return {"id_client": request.id_client, "prediction": prediction, "probability": probability_default}
+
+
+@app.post("/predict_new_client/")
+def predict_new_client(request: PredictionNewClientRequest):
+    input_data = np.array([
+        request.loan_request_amount,
+        request.annual_salary,
+        request.annual_loans,
+        request.age
+    ]).reshape(1, -1)
+
+    # Perform prediction
+    prediction = model_new_client.predict(input_data)[0]
+    probability_default = model_new_client.predict_proba(input_data)[0][1]  # Probability of Default
+
+    return {"prediction": prediction, "probability": probability_default}
