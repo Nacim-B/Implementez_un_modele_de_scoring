@@ -1,6 +1,9 @@
 # Exclude all folders
 */
 
+# Allow the 'pages' directory
+!pages/
+
 # Exclure notebooks from Jupyter Notebook
 *.ipynb
 
