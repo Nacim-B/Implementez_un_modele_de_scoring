@@ -1,7 +1,0 @@
-services:
-  - type: web
-    name: fastapi-service
-    runtime: python
-    plan: free
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn fast_api:app --host 0.0.0.0 --port 8000"

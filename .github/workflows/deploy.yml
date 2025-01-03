@@ -1,25 +1,32 @@
-name: Deploy FastAPI to Render
+name: Deploy API to Render
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch to deploy"
-        required: false
-        default: "main"
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Check out repository
+    - name: Checkout repository
       uses: actions/checkout@v3
 
-    - name: Install Render CLI and Authenticate
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11.10'
+
+    - name: Install dependencies
       run: |
-        curl -fsSL https://render.com/download-cli | bash
-        render login --api-key ${{ secrets.RENDER_API_KEY }}
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+
 
     - name: Deploy to Render
-      run: render deploy --service fastapi-service
+      if: success()
+      env:
+        RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      run: |
+        curl -X POST "https://api.render.com/deploy/srv-ctrpqhtumphs73fg1gk0?key=${{ secrets.RENDER_API_KEY }}" \
+          -H "Content-Type: application/json" \
+          -d '{"clearCache":true}'
