@@ -3,6 +3,7 @@
 
 # Allow the 'pages' directory
 !pages/
+!.github/
 
 # Exclure notebooks from Jupyter Notebook
 *.ipynb
