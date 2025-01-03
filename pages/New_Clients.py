@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "http://127.0.0.1:8000/predict_new_client/"
+API_URL = "http://127.0.0.1:8080/predict_new_client/"
 
 new_client_data = {'loan_request_amount': st.number_input("Amount Loan Request:", min_value=0,
                                                           max_value=1000000000, step=5000),
@@ -26,5 +26,5 @@ if st.button("Predict"):
         else:
             st.error(f"Error: {response.json().get('detail', 'Unknown Problem')}")
     except requests.exceptions.RequestException as e:
-        st.error(f"Please enter a valid ID")
+        st.error(e)
 

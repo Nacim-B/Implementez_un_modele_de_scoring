@@ -8,6 +8,7 @@
 
 # Exclure notebooks from Jupyter Notebook
 *.ipynb
+.env
 
 # Exclude heavy dataset
 Home_credit_risk_data_modeling.csv

@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "http://127.0.0.1:8000/predict/"
+API_URL = "http://127.0.0.1:8080/predict/"
 
 id_client = st.number_input("Enter client id :", min_value=0, step=1)
 
