@@ -6,3 +6,4 @@ scikit-learn==1.2.0
 pydantic==1.10.4
 imbalanced-learn==0.11.0
 streamlit
+setuptools
