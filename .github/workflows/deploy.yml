@@ -1,0 +1,25 @@
+name: Deploy FastAPI to Render
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy"
+        required: false
+        default: "main"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+
+    - name: Install Render CLI and Authenticate
+      run: |
+        curl -fsSL https://render.com/download-cli | bash
+        render login --api-key ${{ secrets.RENDER_API_KEY }}
+
+    - name: Deploy to Render
+      run: render deploy --service fastapi-service

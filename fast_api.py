@@ -1,7 +1,5 @@
-import io
 import pickle
 import pandas as pd
-
 import numpy as np
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -16,11 +14,6 @@ model_new_client_path = "./new_client_model.pkl"
 data = pd.read_csv(dataset_path)
 
 data_new_client = data[['AMT_GOODS_PRICE', 'INCOME_PER_PERSON', 'AMT_ANNUITY', 'DAYS_BIRTH']]
-
-# AMT_GOODS_PRICE montant du prêt demandé
-# INCOME_PER_PERSON montant salaire annuel
-# AMT_ANNUITY montant prêts déjà contractés (annuel)
-# combien de jours depuis naissance (négatif)
 
 with open(model_path, 'rb') as f:
     model = pickle.load(f)
