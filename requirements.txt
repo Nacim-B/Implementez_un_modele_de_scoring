@@ -1,6 +1,6 @@
 fastapi==0.88.0
 uvicorn==0.20.0
-scikit-learn==0.22.2
+scikit-learn==1.2.2
 numpy==1.26.3
 pandas==1.5.3
 pydantic==1.10.4
