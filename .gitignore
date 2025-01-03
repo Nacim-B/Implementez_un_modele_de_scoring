@@ -4,6 +4,7 @@
 # Allow the 'pages' directory
 !pages/
 !.github/
+!workflows/
 
 # Exclure notebooks from Jupyter Notebook
 *.ipynb
