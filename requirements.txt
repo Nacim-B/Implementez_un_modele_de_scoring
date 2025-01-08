@@ -12,3 +12,4 @@ fastapi
 httpx
 pytest-mock
 shap
+lgbm
