@@ -5,7 +5,7 @@ API_URL = "https://implementez-un-modele-de-scoring.onrender.com/predict/"
 
 id_client = st.number_input("Enter client id :", min_value=0, step=1)
 
-threshold_default = 20
+threshold_default = 50
 if st.button("Predict"):
     if id_client:
         # Appel de l'API
