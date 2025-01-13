@@ -1,47 +1,6 @@
 import pickle
 import shap
 import pandas as pd
-import numpy as np
-from fastapi import FastAPI
-from pydantic import BaseModel
-
-app = FastAPI()
-
-# load test data and model
-dataset_path = "./data_test_for_dashboard.csv"
-model_path = "./old_client_model.pkl"
-model_new_client_path = "./new_client_model.pkl"
-
-data = pd.read_csv(dataset_path)
-
-data_new_client = data[['AMT_GOODS_PRICE', 'INCOME_PER_PERSON', 'AMT_ANNUITY', 'DAYS_BIRTH']]
-
-with open(model_path, 'rb') as f:
-    model = pickle.load(f)
-
-with open(model_new_client_path, 'rb') as f:
-    model_new_client = pickle.load(f)
-
-
-class PredictionRequest(BaseModel):
-    id_client: int
-
-
-class PredictionNewClientRequest(BaseModel):
-    loan_request_amount: int
-    annual_salary: int
-    annual_annuity: int
-    age: int
-
-
-@app.get("/")
-def read_root():
-    return {"message": "API is working"}
-
-
-import pickle
-import shap
-import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
@@ -58,6 +17,7 @@ with open(model_path, 'rb') as f:
 
 # Access the model (LightGBM) from the pipeline
 model = pipeline.named_steps['classifier']
+
 
 class PredictionRequest(BaseModel):
     id_client: int
@@ -81,20 +41,10 @@ def predict(request: PredictionRequest):
     prediction = pipeline.predict(client_data)[0]
     probability_default = pipeline.predict_proba(client_data)[0][1]
 
-    # Calculate global feature importance (only if supported)
-    if hasattr(model, "feature_importances_"):
-        feature_importance = dict(zip(client_data.columns, model.feature_importances_))
-    else:
-        feature_importance = "Feature importances not available for this model."
-
-    # Calculate SHAP values for the client
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(client_data)
-
-    # Handle LightGBM SHAP output for binary classification
-    if isinstance(shap_values, list):
-        # Use shap_values[1] for the positive class
-        shap_values = shap_values[1]
+    # Create SHAP explainer
+    explainer = shap.LinearExplainer(model.named_steps['classifier'], shap.maskers.Independent(X1_train))
+    # Compute SHAP values for the entire dataset
+    shap_values = explainer(X1_train)
 
     # Convert SHAP values to dictionary for the specific client
     client_shap_values = dict(zip(client_data.columns, shap_values[0].tolist()))
