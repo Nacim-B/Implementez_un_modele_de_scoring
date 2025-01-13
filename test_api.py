@@ -26,19 +26,3 @@ def test_predict_existing_client():
     # Check if feature importance dictionaries are not empty
     assert len(data["feature_importance"]) > 0
     assert len(data["client_feature_importance"]) > 0
-
-
-def test_predict_new_client():
-    test_data = {
-        "loan_request_amount": 500000,
-        "annual_salary": 50000,
-        "annual_annuity": 25000,
-        "age": 35
-    }
-    response = client.post("/predict_new_client/", json=test_data)
-    assert response.status_code == 200
-    data = response.json()
-    assert "prediction" in data
-    assert "probability" in data
-    assert isinstance(data["probability"], float)
-    assert 0 <= data["probability"] <= 1

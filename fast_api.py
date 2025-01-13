@@ -39,50 +39,69 @@ def read_root():
     return {"message": "API is working"}
 
 
+import pickle
+import shap
+import pandas as pd
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+
+app = FastAPI()
+
+# Load test data and model
+dataset_path = "./data_test_for_dashboard.csv"
+model_path = "./old_client_model.pkl"
+
+data = pd.read_csv(dataset_path)
+
+with open(model_path, 'rb') as f:
+    pipeline = pickle.load(f)
+
+# Access the model (LightGBM) from the pipeline
+model = pipeline.named_steps['classifier']
+
+class PredictionRequest(BaseModel):
+    id_client: int
+
+
+@app.get("/")
+def read_root():
+    return {"message": "API is working"}
+
+
 @app.post("/predict/")
 def predict(request: PredictionRequest):
-    # verify if client exists
+    # Verify if client exists
     if request.id_client not in data["SK_ID_CURR"].values:
-        raise HTTPException(status_code=404, detail="Client ID non trouvé")
+        raise HTTPException(status_code=404, detail="Client ID not found")
 
-    # retrieve client data
+    # Retrieve client data
     client_data = data[data["SK_ID_CURR"] == request.id_client].drop(columns=["SK_ID_CURR"])
 
-    # prediction
-    prediction = model.predict(client_data)[0]
-    probability_default = model.predict_proba(client_data)[0][1]
+    # Prediction
+    prediction = pipeline.predict(client_data)[0]
+    probability_default = pipeline.predict_proba(client_data)[0][1]
 
-
+    # Calculate global feature importance (only if supported)
+    if hasattr(model, "feature_importances_"):
+        feature_importance = dict(zip(client_data.columns, model.feature_importances_))
+    else:
+        feature_importance = "Feature importances not available for this model."
 
     # Calculate SHAP values for the client
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(client_data)
 
-
+    # If the model has multiple classes, take the SHAP values for class 1 (default)
+    if isinstance(shap_values, list):
+        shap_values = shap_values[1]
 
     # Convert SHAP values to dictionary for the specific client
     client_shap_values = dict(zip(client_data.columns, shap_values[0].tolist()))
 
     return {
-        "id_client": request.id_client, 
-        "prediction": prediction, 
+        "id_client": request.id_client,
+        "prediction": prediction,
         "probability": probability_default,
-        "feature_importance": shap_values,
+        "global_feature_importance": feature_importance,
         "client_feature_importance": client_shap_values
     }
-
-
-@app.post("/predict_new_client/")
-def predict_new_client(request: PredictionNewClientRequest):
-    input_data = np.array([
-        request.loan_request_amount,
-        request.annual_salary,
-        request.annual_annuity,
-        request.age
-    ]).reshape(1, -1)
-
-    # Perform prediction
-    prediction = model_new_client.predict(input_data)[0]
-    probability_default = model_new_client.predict_proba(input_data)[0][1]  # Probability of Default
-
-    return {"prediction": prediction, "probability": probability_default}
