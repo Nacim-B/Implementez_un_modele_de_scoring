@@ -52,17 +52,14 @@ def predict(request: PredictionRequest):
     prediction = model.predict(client_data)[0]
     probability_default = model.predict_proba(client_data)[0][1]
 
-    # Calculate global feature importances
-    feature_importance = dict(zip(client_data.columns, model.feature_importances_))
-    
+
+
     # Calculate SHAP values for the client
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(client_data)
-    
-    # If model outputs multiple classes, take the values for class 1 (default)
-    if isinstance(shap_values, list):
-        shap_values = shap_values[1]
-    
+
+
+
     # Convert SHAP values to dictionary for the specific client
     client_shap_values = dict(zip(client_data.columns, shap_values[0].tolist()))
 
@@ -70,7 +67,7 @@ def predict(request: PredictionRequest):
         "id_client": request.id_client, 
         "prediction": prediction, 
         "probability": probability_default,
-        "feature_importance": feature_importance,
+        "feature_importance": shap_values,
         "client_feature_importance": client_shap_values
     }
 

@@ -12,7 +12,7 @@ def test_root_endpoint():
 
 
 def test_predict_existing_client():
-    response = client.post("/predict/", json={"id_client": 100001})
+    response = client.post("/predict/", json={"id_client": 100028})
     assert response.status_code == 200
     data = response.json()
     assert "prediction" in data
