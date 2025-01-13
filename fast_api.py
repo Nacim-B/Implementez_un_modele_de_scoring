@@ -91,8 +91,9 @@ def predict(request: PredictionRequest):
     explainer = shap.TreeExplainer(model)
     shap_values = explainer.shap_values(client_data)
 
-    # If the model has multiple classes, take the SHAP values for class 1 (default)
+    # Handle LightGBM SHAP output for binary classification
     if isinstance(shap_values, list):
+        # Use shap_values[1] for the positive class
         shap_values = shap_values[1]
 
     # Convert SHAP values to dictionary for the specific client
