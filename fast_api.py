@@ -52,6 +52,7 @@ def predict(request: PredictionRequest):
     feature_importance_list.sort(key=lambda x: abs(x[1]), reverse=True)
 
     return {
+        "id_client": request.id_client,
         "classification": int(prediction[0]),
         "probability": float(probability[0]),
         "feature_importances": feature_importance_list
