@@ -30,29 +30,29 @@ def read_root():
 
 @app.post("/predict/")
 def predict(request: PredictionRequest):
-    # Verify if client exists
-    if request.id_client not in data["SK_ID_CURR"].values:
+    # Retrieve client data using id_client
+    client_data = data[data['SK_ID_CURR'] == request.id_client]
+    if client_data.empty:
         raise HTTPException(status_code=404, detail="Client ID not found")
 
-    # Retrieve client data
-    client_data = data[data["SK_ID_CURR"] == request.id_client].drop(columns=["SK_ID_CURR"])
+    # Drop the id_client column for prediction
+    features = client_data.drop(columns=['SK_ID_CURR'])
 
-    # Prediction
-    prediction = pipeline.predict(client_data)[0]
-    probability_default = pipeline.predict_proba(client_data)[0][1]
+    # Make prediction
+    prediction = pipeline.predict(features)
+    probability = pipeline.predict_proba(features)[:, 1]
 
-    # Create SHAP explainer
-    explainer = shap.LinearExplainer(model.named_steps['classifier'], shap.maskers.Independent(X1_train))
-    # Compute SHAP values for the entire dataset
-    shap_values = explainer(X1_train)
+    # Compute SHAP values
+    explainer = shap.Explainer(model, features)
+    shap_values = explainer(features)
 
-    # Convert SHAP values to dictionary for the specific client
-    client_shap_values = dict(zip(client_data.columns, shap_values[0].tolist()))
+    # Prepare feature importances
+    feature_importances = shap_values.values.mean(axis=0)
+    feature_importance_list = list(zip(features.columns, feature_importances))
+    feature_importance_list.sort(key=lambda x: abs(x[1]), reverse=True)
 
     return {
-        "id_client": request.id_client,
-        "prediction": prediction,
-        "probability": probability_default,
-        "global_feature_importance": feature_importance,
-        "client_feature_importance": client_shap_values
+        "classification": int(prediction[0]),
+        "probability": float(probability[0]),
+        "feature_importances": feature_importance_list
     }
