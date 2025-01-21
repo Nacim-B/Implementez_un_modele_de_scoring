@@ -9,9 +9,10 @@ import shap
 import pickle
 
 # Constants
-API_URL = "http://127.0.0.1:8080/predict/"
+API_URL = "https://implementez-un-modele-de-scoring.onrender.com"
 DATASET_PATH = "./data_test_for_dashboard.csv"
 MODEL_PATH = "./old_client_model.pkl"
+
 
 # Load data
 @st.cache_data
@@ -21,8 +22,10 @@ def load_data():
         pipeline = pickle.load(f)
     return data, pipeline
 
+
 data, pipeline = load_data()
 model_lgbm = pipeline.named_steps['classifier']
+
 
 # Function to fetch prediction from API
 def fetch_prediction(client_id, amt_goods_price=None, amt_annuity=None):
@@ -31,12 +34,13 @@ def fetch_prediction(client_id, amt_goods_price=None, amt_annuity=None):
         payload["amt_goods_price"] = amt_goods_price
     if amt_annuity is not None:
         payload["amt_annuity"] = amt_annuity
-    response = requests.post(API_URL, json=payload, verify=False)
+    response = requests.post(f"{API_URL}/predict", json=payload, verify=False)
     if response.status_code == 200:
         return response.json()
     else:
         st.error("Error fetching data from API")
         return None
+
 
 # Function to display a message based on the probability score
 def display_probability_message(probability):
@@ -47,13 +51,16 @@ def display_probability_message(probability):
     else:
         st.error("Decline the loan")
 
+
 # Function to compute global feature importance
 @st.cache_data
 def global_feature_importance():
     explainer = shap.TreeExplainer(model_lgbm, shap.maskers.Independent(data.drop('SK_ID_CURR', axis=1)))
     return explainer(data.drop('SK_ID_CURR', axis=1)), explainer
 
+
 shap_globalvalues, feature_explainer = global_feature_importance()
+
 
 # Function to plot local SHAP values
 def plot_local_waterfall_by_id(sk_id_curr, explainer):
@@ -66,6 +73,7 @@ def plot_local_waterfall_by_id(sk_id_curr, explainer):
     fig, ax = plt.subplots()
     shap.plots.bar(shap_values[0], show=False, ax=ax)
     st.pyplot(fig)
+
 
 # Function to plot income distribution with client marker
 def plot_income_distribution_with_marker(data, client_id, income_col):
@@ -81,6 +89,7 @@ def plot_income_distribution_with_marker(data, client_id, income_col):
         )
     st.plotly_chart(fig_income_log)
 
+
 # Function to plot horizontal box plot of EXT_SOURCE
 def plot_ext_source_box(data, client_id, ext_source):
     fig_ext_source_box = px.box(data, x=ext_source, title=f'Horizontal Box Plot of {ext_source}')
@@ -94,6 +103,7 @@ def plot_ext_source_box(data, client_id, ext_source):
             xref='x', yref='paper'
         )
     st.plotly_chart(fig_ext_source_box)
+
 
 # Function to filter data based on selected options
 def filter_data(data, client_id, filter_option, data_age_category, education_columns):
@@ -122,13 +132,15 @@ def filter_data(data, client_id, filter_option, data_age_category, education_col
             filtered_data = data[data['FLAG_OWN_CAR'] == client_car_ownership[0]]
     return filtered_data
 
+
 # Main App
 st.title("Prediction Credit Default")
 
 # Calculate age and create age categories without modifying the original data
 data_age_category = data.copy()
 data_age_category['AGE'] = (-data['DAYS_BIRTH'] / 365).astype(int)
-data_age_category['AGE_CATEGORY'] = pd.cut(data_age_category['AGE'], bins=[0, 25, 35, 45, 55, float('inf')], labels=['<25', '25-35', '35-45', '45-55', '55+'])
+data_age_category['AGE_CATEGORY'] = pd.cut(data_age_category['AGE'], bins=[0, 25, 35, 45, 55, float('inf')],
+                                           labels=['<25', '25-35', '35-45', '45-55', '55+'])
 
 # Sidebar for client ID selection
 client_id_list = data['SK_ID_CURR'].unique()
@@ -162,16 +174,16 @@ if prediction_data:
     # Visualize credit score
     st.subheader("Credit Score")
     fig = go.Figure(go.Indicator(
-        mode = "gauge+number",
-        value = prediction_data['probability'],
-        title = {'text': "Credit Score"},
-        gauge = {'axis': {'range': [0, 1]},
-                 'bar': {'color': "darkblue"},
-                 'steps' : [
-                     {'range': [0, 0.4], 'color': "lightgreen"},
-                     {'range': [0.4, 0.5], 'color': "yellow"},
-                     {'range': [0.5, 1], 'color': "red"}],
-                 'threshold' : {'line': {'color': "black", 'width': 4}, 'thickness': 0.75, 'value': 0.45}}))
+        mode="gauge+number",
+        value=prediction_data['probability'],
+        title={'text': "Credit Score"},
+        gauge={'axis': {'range': [0, 1]},
+               'bar': {'color': "darkblue"},
+               'steps': [
+                   {'range': [0, 0.4], 'color': "lightgreen"},
+                   {'range': [0.4, 0.5], 'color': "yellow"},
+                   {'range': [0.5, 1], 'color': "red"}],
+               'threshold': {'line': {'color': "black", 'width': 4}, 'thickness': 0.75, 'value': 0.45}}))
     st.plotly_chart(fig)
 
     # Display probability message
