@@ -14,3 +14,4 @@ pytest-mock
 shap
 lightgbm
 plotly
+matplotlib
