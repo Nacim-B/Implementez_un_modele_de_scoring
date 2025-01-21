@@ -13,3 +13,4 @@ httpx
 pytest-mock
 shap
 lightgbm
+plotly
