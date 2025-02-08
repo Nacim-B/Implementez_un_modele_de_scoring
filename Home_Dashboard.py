@@ -10,10 +10,12 @@ import pickle
 import numpy as np
 
 # Constants
-API_URL = "http://127.0.0.1:8080"
+API_URL = "http://127.0.0.1:8000"
 DATASET_PATH = "./data_test_for_dashboard.csv"
 MODEL_PATH = "./old_client_model.pkl"
 
+# Set the Streamlit page layout to wide
+st.set_page_config(layout='centered')
 
 # Load data
 @st.cache_data
@@ -134,6 +136,32 @@ def filter_data(data, client_id, filter_option, data_age_category, education_col
     return filtered_data
 
 
+# Function to plot income vs gender
+def plot_income_vs_gender(data):
+    fig = px.box(data, x='CODE_GENDER', y='AMT_INCOME_TOTAL',
+                 title='Income Distribution by Gender',
+                 labels={'AMT_INCOME_TOTAL': 'Total Income', 'CODE_GENDER': 'Gender'})
+    st.plotly_chart(fig)
+
+
+# Function to plot income vs age
+def plot_income_vs_age(data):
+    data['AGE'] = data['DAYS_BIRTH'] / -365  # Convert days to years
+    fig = px.scatter(data, x='AGE', y='AMT_INCOME_TOTAL',
+                     title='Income vs Age',
+                     labels={'AMT_INCOME_TOTAL': 'Total Income', 'AGE': 'Age (years)'})
+    st.plotly_chart(fig)
+
+
+# Function to plot income vs credit
+def plot_income_vs_credit(data):
+    fig = px.scatter(data, x='AMT_INCOME_TOTAL', y='AMT_CREDIT',
+                     color='CODE_GENDER',
+                     title='Income vs Credit Amount by Gender',
+                     labels={'AMT_INCOME_TOTAL': 'Total Income', 'AMT_CREDIT': 'Credit Amount'})
+    st.plotly_chart(fig)
+
+
 # Main App
 st.title("Prediction Credit Default")
 
@@ -221,60 +249,63 @@ with prediction_container:
 
 st.markdown("---")  # Add a separator line
 
+
+
+with st.expander("📝 Adjustable Parameters"):
 # Adjustable parameters section
-st.subheader("📝 Adjustable Parameters")
-col1, col2 = st.columns(2)
 
-with col1:
-    # Display and adjust AMT_GOODS_PRICE
-    current_goods_price = data[data['SK_ID_CURR'] == client_id]['AMT_GOODS_PRICE'].values[0]
-    st.write("Current Goods Price:", f"${current_goods_price:,.2f}")
-    new_goods_price = st.slider("Adjust Goods Price:", min_value=45000, max_value=3000000, value=int(current_goods_price))
+    col1, col2 = st.columns(2)
 
-with col2:
-    # Display and adjust AMT_ANNUITY
-    current_annuity = data[data['SK_ID_CURR'] == client_id]['AMT_ANNUITY'].values[0]
-    st.write("Current Annuity:", f"${current_annuity:,.2f}")
-    new_annuity = st.slider("Adjust Annuity:", min_value=1000, max_value=1000000, value=int(current_annuity))
-
-# Only show recalculation if values have changed
-if new_goods_price != current_goods_price or new_annuity != current_annuity:
-    
-    # Recalculate prediction with updated goods price and annuity
-    prediction_data = fetch_prediction(client_id, new_goods_price, new_annuity)
-    
-    col1, col2 = st.columns([2, 1])
-    
     with col1:
-        if prediction_data:
-            st.subheader("🎯 Updated Credit Score")
-            fig = go.Figure(go.Indicator(
-                mode="gauge+number",
-                value=prediction_data['probability'],
-                title={'text': "Updated Default Risk Score"},
-                number={'suffix': "%", 'valueformat': ".2f", 'font': {'size': 24}},
-                gauge={'axis': {'range': [0, 1]},
-                       'bar': {'color': "darkblue"},
-                       'steps': [
-                           {'range': [0, 0.4], 'color': "lightgreen"},
-                           {'range': [0.4, 0.5], 'color': "yellow"},
-                           {'range': [0.5, 1], 'color': "red"}],
-                       'threshold': {'line': {'color': "black", 'width': 4}, 'thickness': 0.75, 'value': 0.45}}))
-            fig.update_layout(height=500)
-            st.plotly_chart(fig, use_container_width=True)
-    
+        # Display and adjust AMT_GOODS_PRICE
+        current_goods_price = data[data['SK_ID_CURR'] == client_id]['AMT_GOODS_PRICE'].values[0]
+        st.write("Current Goods Price:", f"${current_goods_price:,.2f}")
+        new_goods_price = st.slider("Adjust Goods Price:", min_value=45000, max_value=3000000, value=int(current_goods_price))
+
     with col2:
-        if prediction_data:
-            st.subheader("📊 Updated Decision")
-            probability = prediction_data['probability']
-            st.write("")  # Add some spacing
-            st.write("")  # Add some spacing
-            if probability < 0.4:
-                st.success("ACCEPT THE LOAN", icon="✅")
-            elif 0.4 <= probability < 0.5:
-                st.warning("NEEDS REVIEW", icon="⚠️")
-            else:
-                st.error("DECLINE THE LOAN", icon="❌")
+        # Display and adjust AMT_ANNUITY
+        current_annuity = data[data['SK_ID_CURR'] == client_id]['AMT_ANNUITY'].values[0]
+        st.write("Current Annuity:", f"${current_annuity:,.2f}")
+        new_annuity = st.slider("Adjust Annuity:", min_value=1000, max_value=1000000, value=int(current_annuity))
+
+    # Only show recalculation if values have changed
+    if new_goods_price != current_goods_price or new_annuity != current_annuity:
+        
+        # Recalculate prediction with updated goods price and annuity
+        prediction_data = fetch_prediction(client_id, new_goods_price, new_annuity)
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            if prediction_data:
+                st.subheader("🎯 Updated Credit Score")
+                fig = go.Figure(go.Indicator(
+                    mode="gauge+number",
+                    value=prediction_data['probability'],
+                    title={'text': "Updated Default Risk Score"},
+                    number={'suffix': "%", 'valueformat': ".2f", 'font': {'size': 24}},
+                    gauge={'axis': {'range': [0, 1]},
+                        'bar': {'color': "darkblue"},
+                        'steps': [
+                            {'range': [0, 0.4], 'color': "lightgreen"},
+                            {'range': [0.4, 0.5], 'color': "yellow"},
+                            {'range': [0.5, 1], 'color': "red"}],
+                        'threshold': {'line': {'color': "black", 'width': 4}, 'thickness': 0.75, 'value': 0.45}}))
+                fig.update_layout(height=500)
+                st.plotly_chart(fig, use_container_width=True)
+        
+        with col2:
+            if prediction_data:
+                st.subheader("📊 Updated Decision")
+                probability = prediction_data['probability']
+                st.write("")  # Add some spacing
+                st.write("")  # Add some spacing
+                if probability < 0.4:
+                    st.success("ACCEPT THE LOAN", icon="✅")
+                elif 0.4 <= probability < 0.5:
+                    st.warning("NEEDS REVIEW", icon="⚠️")
+                else:
+                    st.error("DECLINE THE LOAN", icon="❌")
 
 st.markdown("---")  # Add a separator line
 
@@ -485,79 +516,14 @@ for feature in comparison_features:
     
     st.plotly_chart(fig, use_container_width=True)
 
+with st.expander("🔍 More Information - Bivariate Analysis"):
+    # Bivariate Analysis
+    plot_income_vs_gender(data)
+    plot_income_vs_age(data)
+    plot_income_vs_credit(data)
+
 st.markdown("---")  # Add a separator line
 
 # Additional Analysis Expander
-with st.expander("🔍 More Information - Bivariate Analysis"):
-    st.write("This analysis shows the relationship between Income and Credit Amount, colored by default risk:")
+
     
-    # Create scatter plot
-    fig = go.Figure()
-    
-    # Add scatter plot for all clients
-    fig.add_trace(go.Scatter(
-        x=data['AMT_INCOME_TOTAL'],
-        y=data['AMT_CREDIT'],
-        mode='markers',
-        marker=dict(
-            size=8,
-            color=data['TARGET'],  # Color by target/probability
-            colorscale='RdYlGn_r',  # Red for high risk, green for low risk
-            showscale=True,
-            colorbar=dict(
-                title='Default Risk',
-                tickformat='.0%'
-            )
-        ),
-        name='All Clients',
-        opacity=0.6
-    ))
-    
-    # Add current client as a star
-    client_data = data[data['SK_ID_CURR'] == client_id]
-    fig.add_trace(go.Scatter(
-        x=client_data['AMT_INCOME_TOTAL'],
-        y=client_data['AMT_CREDIT'],
-        mode='markers',
-        marker=dict(
-            symbol='star',
-            size=20,
-            color='red',
-            line=dict(
-                color='black',
-                width=2
-            )
-        ),
-        name='Current Client',
-        showlegend=True
-    ))
-    
-    # Update layout
-    fig.update_layout(
-        title='Income vs Credit Amount Analysis',
-        xaxis_title='Total Income',
-        yaxis_title='Credit Amount',
-        height=500,
-        xaxis=dict(
-            tickformat='$,.0f',
-            showgrid=True
-        ),
-        yaxis=dict(
-            tickformat='$,.0f',
-            showgrid=True
-        ),
-        hovermode='closest'
-    )
-    
-    st.plotly_chart(fig, use_container_width=True)
-    
-    st.write("""
-    **Understanding this plot:**
-    - Each point represents a client
-    - X-axis shows total income
-    - Y-axis shows credit amount requested
-    - Color indicates default risk (red = higher risk, green = lower risk)
-    - Your position is marked with a red star ⭐
-    
-    This visualization helps understand how income and credit amount relate to default risk.
-    """)

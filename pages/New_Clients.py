@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_URL = "http://localhost:8080/predict_new_client"
+API_URL = "http://localhost:8000/predict_new_client"
 
 st.title("New Client Loan Application")
 
