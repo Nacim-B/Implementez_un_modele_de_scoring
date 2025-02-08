@@ -10,7 +10,7 @@ import pickle
 import numpy as np
 
 # Constants
-API_URL = "http://127.0.0.1:8000"
+API_URL = "https://implementez-un-modele-de-scoring.onrender.com"
 DATASET_PATH = "./data_test_for_dashboard.csv"
 MODEL_PATH = "./old_client_model.pkl"
 
