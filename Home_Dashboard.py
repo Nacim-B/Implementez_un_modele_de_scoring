@@ -15,7 +15,7 @@ DATASET_PATH = "./data_test_for_dashboard.csv"
 MODEL_PATH = "./old_client_model.pkl"
 
 # Set the Streamlit page layout to wide
-st.set_page_config(layout='centered')
+st.set_page_config(layout='wide')
 
 # Load data
 @st.cache_data
@@ -29,7 +29,17 @@ def load_data():
 data, pipeline = load_data()
 model_lgbm = pipeline.named_steps['classifier']
 
-
+st.markdown(
+    """
+    <style>
+    /* Target all Streamlit text elements */
+    div[data-testid="stMarkdownContainer"] > p {
+        font-size: 25px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 # Function to fetch prediction from API
 def fetch_prediction(client_id, amt_goods_price=None, amt_annuity=None):
     payload = {"id_client": client_id}
@@ -222,15 +232,13 @@ with prediction_container:
             fig = go.Figure(go.Indicator(
                 mode="gauge+number",
                 value=prediction_data['probability'],
-                title={'text': "Default Risk Score"},
                 number={'suffix': "%", 'valueformat': ".2f", 'font': {'size': 24}},
                 gauge={'axis': {'range': [0, 1]},
                        'bar': {'color': "darkblue"},
                        'steps': [
                            {'range': [0, 0.4], 'color': "lightgreen"},
                            {'range': [0.4, 0.5], 'color': "yellow"},
-                           {'range': [0.5, 1], 'color': "red"}],
-                       'threshold': {'line': {'color': "black", 'width': 4}, 'thickness': 0.75, 'value': 0.45}}))
+                           {'range': [0.5, 1], 'color': "red"}]}))
             fig.update_layout(height=500)
             st.plotly_chart(fig, use_container_width=True)
     
@@ -282,15 +290,13 @@ with st.expander("📝 Adjustable Parameters"):
                 fig = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=prediction_data['probability'],
-                    title={'text': "Updated Default Risk Score"},
                     number={'suffix': "%", 'valueformat': ".2f", 'font': {'size': 24}},
                     gauge={'axis': {'range': [0, 1]},
                         'bar': {'color': "darkblue"},
                         'steps': [
                             {'range': [0, 0.4], 'color': "lightgreen"},
                             {'range': [0.4, 0.5], 'color': "yellow"},
-                            {'range': [0.5, 1], 'color': "red"}],
-                        'threshold': {'line': {'color': "black", 'width': 4}, 'thickness': 0.75, 'value': 0.45}}))
+                            {'range': [0.5, 1], 'color': "red"}]}))
                 fig.update_layout(height=500)
                 st.plotly_chart(fig, use_container_width=True)
         
@@ -332,33 +338,26 @@ with tab1:
     feature_importance = feature_importance.sort_values('AbsImpact', ascending=False).head(10)
     feature_importance = feature_importance.drop('AbsImpact', axis=1)
 
-    # Create two columns for the feature importance display
-    col1, col2 = st.columns([2, 1])
+    
+    # Create a styled dataframe
+    styled_df = pd.DataFrame({
+        'Feature': feature_importance['Feature'].apply(lambda x: x.replace('_', ' ').title()),
+        'Current Value': feature_importance['Impact'],
+        'Impact': feature_importance['Direction']
+    }).reset_index(drop=True)
+    
+    # Apply custom styling
+    st.dataframe(
+        styled_df,
+        column_config={
+            "Feature": "Feature Name",
+            "Current Value": "Importance",
+            "Impact": "Risk Impact"
+        },
+        height=400
+    )
 
-    with col1:
-        # Create a styled dataframe
-        styled_df = pd.DataFrame({
-            'Feature': feature_importance['Feature'].apply(lambda x: x.replace('_', ' ').title()),
-            'Current Value': feature_importance['Impact'],
-            'Impact': feature_importance['Direction']
-        }).reset_index(drop=True)
-        
-        # Apply custom styling
-        st.dataframe(
-            styled_df,
-            column_config={
-                "Feature": "Feature Name",
-                "Current Value": "Importance",
-                "Impact": "Risk Impact"
-            },
-            height=400
-        )
-
-    with col2:
-        st.subheader("Understanding the Analysis")
-        st.write("""
-        This table shows the top 10 factors that influence the loan decision.
-        """)
+   
 
 with tab2:
     # Calculate global feature importance using mean absolute SHAP values
@@ -373,34 +372,27 @@ with tab2:
     # Sort by global impact and get top 10
     global_importance = global_importance.sort_values('Global Impact', ascending=False).head(10)
     
-    # Create two columns for the global importance display
-    col1, col2 = st.columns([2, 1])
     
-    with col1:
-        # Create a styled dataframe for global importance
-        styled_global_df = pd.DataFrame({
-            'Feature': global_importance['Feature'].apply(lambda x: x.replace('_', ' ').title()),
-            'Global Importance': global_importance['Global Impact']
-        }).reset_index(drop=True)
-        
-        # Apply custom styling
-        st.dataframe(
-            styled_global_df,
-            column_config={
-                "Feature": "Feature Name",
-                "Global Importance": st.column_config.NumberColumn(
-                    "Global Importance",
-                    format="%.4f"
-                )
-            },
-            height=400
-        )
+    # Create a styled dataframe for global importance
+    styled_global_df = pd.DataFrame({
+        'Feature': global_importance['Feature'].apply(lambda x: x.replace('_', ' ').title()),
+        'Global Importance': global_importance['Global Impact']
+    }).reset_index(drop=True)
     
-    with col2:
-        st.subheader("Understanding Global Impact")
-        st.write("""
-        This table shows the overall importance of each feature across all clients.
-        """)
+    # Apply custom styling
+    st.dataframe(
+        styled_global_df,
+        column_config={
+            "Feature": "Feature Name",
+            "Global Importance": st.column_config.NumberColumn(
+                "Global Importance",
+                format="%.4f"
+            )
+        },
+        height=400
+    )
+    
+   
 
 st.markdown("---")  # Add a separator line
 
@@ -520,7 +512,7 @@ with st.expander("🔍 More Information - Bivariate Analysis"):
     # Bivariate Analysis
     plot_income_vs_gender(data)
     plot_income_vs_age(data)
-    plot_income_vs_credit(data)
+    #plot_income_vs_credit(data)
 
 st.markdown("---")  # Add a separator line
 

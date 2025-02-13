@@ -5,6 +5,7 @@
 !pages/
 !.github/
 !workflows/
+!.streamlit/
 
 # Exclure notebooks from Jupyter Notebook
 *.ipynb

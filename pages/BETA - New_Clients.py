@@ -5,6 +5,17 @@ API_URL = "https://implementez-un-modele-de-scoring.onrender.com/predict_new_cli
 
 st.title("New Client Loan Application")
 
+st.markdown(
+    """
+    <style>
+    /* Target all Streamlit text elements */
+    div[data-testid="stMarkdownContainer"] > p {
+        font-size: 25px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 # Input fields for new client
 amt_goods_price = st.number_input("Goods Price (AMT_GOODS_PRICE):", min_value=0.0, value=500000.0)
 income_per_person = st.number_input("Income per Person (INCOME_PER_PERSON):", min_value=0.0, value=100000.0)
