@@ -287,7 +287,7 @@ with st.expander("📝 Adjustable Parameters"):
         with col1:
             if prediction_data:
                 st.subheader("🎯 Updated Credit Score")
-                fig = go.Figure(go.Indicator(
+                fig2 = go.Figure(go.Indicator(
                     mode="gauge+number",
                     value=prediction_data['probability'],
                     number={'suffix': "%", 'valueformat': ".2f", 'font': {'size': 24}},
@@ -297,8 +297,8 @@ with st.expander("📝 Adjustable Parameters"):
                             {'range': [0, 0.4], 'color': "lightgreen"},
                             {'range': [0.4, 0.5], 'color': "yellow"},
                             {'range': [0.5, 1], 'color': "red"}]}))
-                fig.update_layout(height=500)
-                st.plotly_chart(fig, use_container_width=True)
+                fig2.update_layout(height=500)
+                st.plotly_chart(fig2, use_container_width=True)
         
         with col2:
             if prediction_data:
